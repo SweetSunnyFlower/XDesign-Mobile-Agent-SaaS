@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
 import { inngest } from "@/inngest/client";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getKindeServerSession();
     const user = await session.getUser();
