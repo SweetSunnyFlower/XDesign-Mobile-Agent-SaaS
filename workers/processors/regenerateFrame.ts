@@ -30,7 +30,7 @@ export const regenerateFrameProcessor = async (
     );
 
     // Emit generation start
-    emitToUser(userId, "generation.start", {
+    await emitToUser(userId, "generation.start", {
       status: "generating",
       projectId: projectId,
     });
@@ -111,14 +111,14 @@ export const regenerateFrameProcessor = async (
     });
 
     // Emit frame updated event
-    emitToUser(userId, "frame.created", {
+    await emitToUser(userId, "frame.created", {
       frame: updatedFrame,
       screenId: frameId,
       projectId: projectId,
     });
 
     // Emit generation complete
-    emitToUser(userId, "generation.complete", {
+    await emitToUser(userId, "generation.complete", {
       status: "completed",
       projectId: projectId,
     });
@@ -130,7 +130,7 @@ export const regenerateFrameProcessor = async (
     console.error(`[regenerateFrame] Job ${job.id} failed:`, error);
 
     // Emit error to user
-    emitToUser(userId, "generation.error", {
+    await emitToUser(userId, "generation.error", {
       error: error instanceof Error ? error.message : "Unknown error",
       projectId: projectId,
     });

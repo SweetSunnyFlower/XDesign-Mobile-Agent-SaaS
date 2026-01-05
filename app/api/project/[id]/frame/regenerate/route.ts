@@ -1,5 +1,5 @@
-import { auth } from "@/lib/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { addRegenerateFrameJob } from "@/lib/queue";
 
@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     const user = session?.user;
 
     if (!user) {

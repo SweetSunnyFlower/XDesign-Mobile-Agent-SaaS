@@ -1,6 +1,8 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HTTPServer } from 'http';
 import jwt from 'jsonwebtoken';
+import { createRedisSubscriber, WEBSOCKET_CHANNEL, type WebSocketMessage } from './redis-pubsub';
+import type { Redis } from 'ioredis';
 
 // WebSocket event types
 export enum WebSocketEvent {
@@ -12,6 +14,7 @@ export enum WebSocketEvent {
 }
 
 let io: SocketIOServer | null = null;
+let redisSubscriber: Redis | null = null;
 
 /**
  * Initialize the Socket.io server
@@ -72,8 +75,58 @@ export const initSocketServer = (httpServer: HTTPServer) => {
     });
   });
 
+  // Set up Redis subscriber to receive events from workers
+  setupRedisSubscriber(io);
+
   console.log('✅ Socket.io server initialized');
   return io;
+};
+
+/**
+ * Set up Redis subscriber to receive WebSocket events from workers
+ */
+const setupRedisSubscriber = (socketServer: SocketIOServer): void => {
+  if (redisSubscriber) {
+    console.warn('Redis subscriber already initialized');
+    return;
+  }
+
+  redisSubscriber = createRedisSubscriber();
+
+  redisSubscriber.on('connect', () => {
+    console.log('✅ Redis subscriber connected');
+  });
+
+  redisSubscriber.on('error', (error) => {
+    console.error('❌ Redis subscriber error:', error);
+  });
+
+  redisSubscriber.on('message', (channel, message) => {
+    if (channel !== WEBSOCKET_CHANNEL) {
+      return;
+    }
+
+    try {
+      const event: WebSocketMessage = JSON.parse(message);
+      const { userId, event: eventName, data } = event;
+
+      const room = `user:${userId}`;
+      socketServer.to(room).emit(eventName, data);
+
+      console.log(`[Redis→Socket.io] Emitted "${eventName}" to ${room}`);
+    } catch (error) {
+      console.error('[Redis→Socket.io] Failed to parse message:', error);
+    }
+  });
+
+  // Subscribe to the WebSocket events channel
+  redisSubscriber.subscribe(WEBSOCKET_CHANNEL, (err) => {
+    if (err) {
+      console.error(`Failed to subscribe to ${WEBSOCKET_CHANNEL}:`, err);
+    } else {
+      console.log(`✅ Subscribed to ${WEBSOCKET_CHANNEL}`);
+    }
+  });
 };
 
 /**

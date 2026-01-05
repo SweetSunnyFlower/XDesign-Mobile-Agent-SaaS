@@ -62,7 +62,7 @@ export const generateScreensProcessor = async (
     );
 
     // Emit generation start
-    emitToUser(userId, "generation.start", {
+    await emitToUser(userId, "generation.start", {
       status: "running",
       projectId: projectId,
     });
@@ -72,7 +72,7 @@ export const generateScreensProcessor = async (
     // STEP 1: Analyze and plan screens
     console.log(`[generateScreens] Step 1: Analysis`);
 
-    emitToUser(userId, "analysis.start", {
+    await emitToUser(userId, "analysis.start", {
       status: "analyzing",
       projectId: projectId,
     });
@@ -126,7 +126,7 @@ export const generateScreensProcessor = async (
       });
     }
 
-    emitToUser(userId, "analysis.complete", {
+    await emitToUser(userId, "analysis.complete", {
       status: "generating",
       theme: themeToUse,
       totalScreens: output.screens.length,
@@ -240,7 +240,7 @@ export const generateScreensProcessor = async (
       generatedFrames.push(frame);
 
       // Emit frame created event
-      emitToUser(userId, "frame.created", {
+      await emitToUser(userId, "frame.created", {
         frame: frame,
         screenId: screenPlan.id,
         projectId: projectId,
@@ -252,7 +252,7 @@ export const generateScreensProcessor = async (
     }
 
     // Emit generation complete
-    emitToUser(userId, "generation.complete", {
+    await emitToUser(userId, "generation.complete", {
       status: "completed",
       projectId: projectId,
     });
@@ -264,7 +264,7 @@ export const generateScreensProcessor = async (
     console.error(`[generateScreens] Job ${job.id} failed:`, error);
 
     // Emit error to user (optional)
-    emitToUser(userId, "generation.error", {
+    await emitToUser(userId, "generation.error", {
       error: error instanceof Error ? error.message : "Unknown error",
       projectId: projectId,
     });
