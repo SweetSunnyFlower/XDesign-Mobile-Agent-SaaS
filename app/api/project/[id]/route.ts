@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { inngest } from "@/inngest/client";
+import { addGenerateScreensJob } from "@/lib/queue";
 
 export async function GET(
   req: NextRequest,
@@ -89,17 +89,14 @@ export async function POST(
       );
     }
 
-    //Trigger the Inngest
+    //Trigger the BullMQ job
     try {
-      await inngest.send({
-        name: "ui/generate.screens",
-        data: {
-          userId,
-          projectId: id,
-          prompt,
-          frames: project.frames,
-          theme: project.theme,
-        },
+      await addGenerateScreensJob({
+        userId,
+        projectId: id,
+        prompt,
+        frames: project.frames,
+        theme: project.theme || undefined,
       });
     } catch (error) {
       console.log(error);

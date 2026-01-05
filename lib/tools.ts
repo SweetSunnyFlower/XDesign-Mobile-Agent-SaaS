@@ -1,9 +1,13 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+/**
+ * Unsplash image search tool for AI
+ * Used during mobile screen generation to fetch real images
+ */
 export const unsplashTool = tool({
   description:
-    "Search for high-quality images from Unsplash.  Use this when you need to add an <img> tag.",
+    "Search for high-quality images from Unsplash. Use this when you need to add an <img> tag.",
   inputSchema: z.object({
     query: z
       .string()

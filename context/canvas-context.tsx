@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useInngestSubscription } from "@inngest/realtime/hooks";
-import { fetchRealtimeSubscriptionToken } from "@/app/action/realtime";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { THEME_LIST, ThemeType } from "@/lib/themes";
 import { FrameType } from "@/types/project";
 import {
@@ -78,10 +77,8 @@ export const CanvasProvider = ({
       ? frames.find((f) => f.id === selectedFrameId) || null
       : null;
 
-  //Update the LoadingState Inngest Realtime event
-  const { freshData } = useInngestSubscription({
-    refreshToken: fetchRealtimeSubscriptionToken,
-  });
+  //Update the LoadingState with WebSocket real-time events
+  const { freshData } = useWebSocket();
 
   useEffect(() => {
     if (!freshData || freshData.length === 0) return;

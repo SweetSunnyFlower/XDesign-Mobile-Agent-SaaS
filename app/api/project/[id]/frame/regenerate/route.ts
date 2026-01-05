@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { inngest } from "@/inngest/client";
+import { addRegenerateFrameJob } from "@/lib/queue";
 
 export async function POST(
   request: NextRequest,
@@ -45,17 +45,14 @@ export async function POST(
       return NextResponse.json({ error: "Frame not found" }, { status: 404 });
     }
 
-    // Trigger inngest function
-    await inngest.send({
-      name: "ui/regenerate.frame",
-      data: {
-        userId: user.id,
-        projectId: projectId,
-        frameId: frameId,
-        prompt: prompt,
-        theme: project.theme,
-        frame: frame,
-      },
+    // Trigger BullMQ job
+    await addRegenerateFrameJob({
+      userId: user.id,
+      projectId: projectId,
+      frameId: frameId,
+      prompt: prompt,
+      theme: project.theme || '',
+      frame: frame,
     });
 
     return NextResponse.json({
