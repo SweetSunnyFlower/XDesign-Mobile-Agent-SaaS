@@ -2,11 +2,12 @@
 
 import { inngest } from "@/inngest/client";
 import { getSubscriptionToken } from "@inngest/realtime";
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "@/lib/auth";
 
 export async function fetchRealtimeSubscriptionToken() {
-  const session = await getKindeServerSession();
-  const user = await session.getUser();
+  const session = await auth();
+  const user = session?.user;
+
   if (!user) throw new Error("Unauthorized");
 
   // This creates a token using the Inngest API that is bound to the channel and topic:

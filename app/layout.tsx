@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/context/query-provider";
+import { Providers } from "@/app/providers";
 
 const jostSans = Jost({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
@@ -22,17 +23,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${jostSans.className} antialiased`}>
-        <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster richColors position="bottom-center" />
-          </ThemeProvider>
-        </QueryProvider>
+        <Providers>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster richColors position="bottom-center" />
+            </ThemeProvider>
+          </QueryProvider>
+        </Providers>
       </body>
     </html>
   );

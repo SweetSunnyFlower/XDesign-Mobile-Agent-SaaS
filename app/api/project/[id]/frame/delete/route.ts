@@ -1,4 +1,4 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -8,14 +8,24 @@ export async function DELETE(
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth();
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { frameId } = await request.json();
 
-    if (!frameId) throw new Error("FrameId is required");
+    if (!frameId) {
+      return NextResponse.json(
+        { error: "FrameId is required" },
+        { status: 400 }
+      );
+    }
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,

@@ -1,4 +1,5 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { generateProjectName } from "@/app/action/action";
@@ -6,10 +7,12 @@ import { inngest } from "@/inngest/client";
 
 export async function GET() {
   try {
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getServerSession(authOptions);
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const projects = await prisma.project.findMany({
       where: {
@@ -37,11 +40,16 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { prompt } = await request.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getServerSession(authOptions);
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
-    if (!prompt) throw new Error("Missing Prompt");
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!prompt) {
+      return NextResponse.json({ error: "Missing Prompt" }, { status: 400 });
+    }
 
     const userId = user.id;
 

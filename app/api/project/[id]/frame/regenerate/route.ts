@@ -1,4 +1,4 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { inngest } from "@/inngest/client";
@@ -9,8 +9,9 @@ export async function POST(
 ) {
   try {
     const { id: projectId } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth();
+    const user = session?.user;
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

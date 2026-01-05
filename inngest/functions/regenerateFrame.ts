@@ -1,6 +1,7 @@
+"use server";
+
 import { generateText, stepCountIs } from "ai";
 import { inngest } from "../client";
-//import { openrouter } from "@/lib/openrouter";
 import { GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";

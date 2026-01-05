@@ -1,7 +1,8 @@
-import { generateObject, generateText, stepCountIs } from "ai";
+"use server"
+import { generateText, Output, stepCountIs } from "ai";
 import { inngest } from "../client";
 import { z } from "zod";
-//import { openrouter } from "@/lib/openrouter";
+import { deepseek } from "@/lib/deepseek";
 import { FrameType } from "@/types/project";
 import { ANALYSIS_PROMPT, GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
@@ -106,14 +107,16 @@ export const generateScreens = inngest.createFunction(
           USER REQUEST: ${prompt}
         `.trim();
 
-      const { object } = await generateObject({
-        model: "google/gemini-3-pro-preview",
-        schema: AnalysisSchema,
+      const { output } = await generateText({
+        model: deepseek("deepseek-v3-1-250821"),
+        output: Output.object({
+          schema: AnalysisSchema
+        }),
         system: ANALYSIS_PROMPT,
         prompt: analysisPrompt,
       });
 
-      const themeToUse = isExistingGeneration ? existingTheme : object.theme;
+      const themeToUse = isExistingGeneration ? existingTheme : output.theme;
 
       if (!isExistingGeneration) {
         await prisma.project.update({
@@ -131,13 +134,13 @@ export const generateScreens = inngest.createFunction(
         data: {
           status: "generating",
           theme: themeToUse,
-          totalScreens: object.screens.length,
-          screens: object.screens,
+          totalScreens: output.screens.length,
+          screens: output.screens,
           projectId: projectId,
         },
       });
 
-      return { ...object, themeToUse };
+      return { ...output, themeToUse };
     });
 
     // Actuall generation of each screens

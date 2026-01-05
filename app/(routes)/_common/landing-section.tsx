@@ -5,14 +5,15 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import PromptInput from "@/components/prompt-input";
 import Header from "./header";
 import { useCreateProject, useGetProjects } from "@/features/use-project";
-import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs";
+import { useSession } from "next-auth/react";
 import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
 import { FolderOpenDotIcon } from "lucide-react";
 
 const LandingSection = () => {
-  const { user } = useKindeBrowserClient();
+  const { data: session } = useSession();
+  const user = session?.user;
   const [promptText, setPromptText] = useState<string>("");
   const userId = user?.id;
 

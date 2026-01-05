@@ -1,4 +1,4 @@
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { inngest } from "@/inngest/client";
@@ -9,10 +9,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth();
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const project = await prisma.project.findFirst({
       where: {
@@ -52,11 +57,22 @@ export async function POST(
   try {
     const { id } = await params;
     const { prompt } = await request.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth();
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
-    if (!prompt) throw new Error("Missing Prompt");
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    if (!prompt) {
+      return NextResponse.json(
+        { error: "Missing Prompt" },
+        { status: 400 }
+      );
+    }
 
     const userId = user.id;
     const project = await prisma.project.findFirst({
@@ -64,7 +80,12 @@ export async function POST(
       include: { frames: true },
     });
 
-    if (!project) throw new Error("Project not found");
+    if (!project) {
+      return NextResponse.json(
+        { error: "Project not found" },
+        { status: 404 }
+      );
+    }
 
     //Trigger the Inngest
     try {
@@ -103,11 +124,22 @@ export async function PATCH(
   try {
     const { id } = await params;
     const { themeId } = await request.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await auth();
+    const user = session?.user;
 
-    if (!user) throw new Error("Unauthorized");
-    if (!themeId) throw new Error("Missing Theme");
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    if (!themeId) {
+      return NextResponse.json(
+        { error: "Missing Theme" },
+        { status: 400 }
+      );
+    }
 
     const userId = user.id;
 

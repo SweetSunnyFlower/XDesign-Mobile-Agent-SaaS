@@ -1,5 +1,8 @@
+"use server";
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 // Cache the Chromium executable path to avoid re-downloading
@@ -38,10 +41,14 @@ export async function POST(req: Request) {
 
   try {
     const { html, width = 800, height = 600, projectId } = await req.json();
-    const session = await getKindeServerSession();
-    const user = await session.getUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) throw new Error("Unauthorized");
+    const user = session?.user;
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const userId = user.id;
 
     //Detect environment
