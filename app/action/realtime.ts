@@ -1,11 +1,12 @@
 "use server";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { inngest } from "@/inngest/client";
 import { getSubscriptionToken } from "@inngest/realtime";
-import { auth } from "@/lib/auth";
 
 export async function fetchRealtimeSubscriptionToken() {
-  const session = await auth();
+  const session = await getServerSession(authOptions);
   const user = session?.user;
 
   if (!user) throw new Error("Unauthorized");

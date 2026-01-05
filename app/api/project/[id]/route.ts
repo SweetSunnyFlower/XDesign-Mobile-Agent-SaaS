@@ -1,4 +1,6 @@
-import { auth } from "@/lib/auth";
+
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { inngest } from "@/inngest/client";
@@ -9,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     const user = session?.user;
 
     if (!user) {
@@ -57,7 +59,7 @@ export async function POST(
   try {
     const { id } = await params;
     const { prompt } = await request.json();
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     const user = session?.user;
 
     if (!user) {
@@ -124,7 +126,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const { themeId } = await request.json();
-    const session = await auth();
+    const session = await getServerSession(authOptions);
     const user = session?.user;
 
     if (!user) {
