@@ -85,7 +85,8 @@ export const CanvasProvider = ({
 
     freshData.forEach((message) => {
       const { data, topic } = message;
-
+      console.log("WebSocket topic", topic);
+      console.log("WebSocket data", data);
       if (data.projectId !== projectId) return;
 
       switch (topic) {
@@ -113,9 +114,15 @@ export const CanvasProvider = ({
           if (data.frame) {
             setFrames((prev) => {
               const newFrames = [...prev];
+              console.log("newFrames", newFrames);
+              console.log("data", data);
               const idx = newFrames.findIndex((f) => f.id === data.screenId);
-              if (idx !== -1) newFrames[idx] = data.frame;
-              else newFrames.push(data.frame);
+              console.log("idx", idx);
+              if (idx !== -1) {
+                newFrames[idx] = data.frame;
+              } else {
+                newFrames.push(data.frame);
+              }
               return newFrames;
             });
           }

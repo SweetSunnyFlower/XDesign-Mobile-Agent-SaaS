@@ -4,6 +4,7 @@ import { deepseek } from "@/lib/deepseek";
 
 export async function generateProjectName(prompt: string) {
   try {
+    // 为项目生成一个简单的名称
     const { text } = await generateText({
       model: deepseek("deepseek-v3-1-250821"),
       system: `

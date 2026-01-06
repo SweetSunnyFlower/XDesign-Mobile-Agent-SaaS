@@ -69,7 +69,7 @@ export const generateScreensProcessor = async (
 
     await job.updateProgress(10);
 
-    // STEP 1: Analyze and plan screens
+    // STEP 1: 分析规划
     console.log(`[generateScreens] Step 1: Analysis`);
 
     await emitToUser(userId, "analysis.start", {
@@ -114,8 +114,13 @@ export const generateScreensProcessor = async (
       prompt: analysisPrompt,
     });
 
-    const themeToUse = isExistingGeneration ? existingTheme! : output.theme;
+    console.log("Frame output", output);
 
+    const themeToUse = isExistingGeneration ? existingTheme! : output.theme;
+    console.log("isExistingGeneration", isExistingGeneration);
+    console.log("themeToUse", themeToUse);
+    console.log("userId",userId)
+    console.log("projectId", projectId)
     if (!isExistingGeneration) {
       await prisma.project.update({
         where: {
