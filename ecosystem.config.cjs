@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'nextjs-app',
+            name: 'xdesign-server',
             script: 'npm',
             args: 'start',
             env: {
@@ -10,6 +10,17 @@ module.exports = {
             },
             env_development: {
                 PORT: 8777,
+                NODE_ENV: 'development',
+            },
+        },
+        {
+            name: 'xdesign-worker',
+            script: 'npm',
+            args: 'run start:worker',
+            env: {
+                NODE_ENV: 'production',
+            },
+            env_development: {
                 NODE_ENV: 'development',
             },
         },

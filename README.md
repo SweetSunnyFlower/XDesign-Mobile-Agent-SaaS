@@ -969,6 +969,97 @@ Get JWT token for WebSocket authentication.
 
 ## 🚢 Production Deployment
 
+### PM2 Deployment (VPS/Local Server)
+
+PM2 is a production process manager that keeps your applications running with automatic restarts and monitoring.
+
+**Install PM2:**
+```bash
+npm install -g pm2
+# or
+pnpm add -g pm2
+```
+
+**Start all services (server + worker):**
+```bash
+# Production mode
+pm2 start ecosystem.config.cjs
+
+# Development mode
+pm2 start ecosystem.config.cjs --env development
+```
+
+**View running processes:**
+```bash
+pm2 status
+# or
+pm2 list
+```
+
+**View logs:**
+```bash
+# All logs
+pm2 logs
+
+# Specific service logs
+pm2 logs xdesign-server
+pm2 logs xdesign-worker
+
+# Clear logs
+pm2 flush
+```
+
+**Stop/Restart services:**
+```bash
+# Stop all
+pm2 stop all
+
+# Stop specific service
+pm2 stop xdesign-server
+pm2 stop xdesign-worker
+
+# Restart all
+pm2 restart all
+
+# Restart specific service
+pm2 restart xdesign-server
+pm2 restart xdesign-worker
+```
+
+**Monitor resource usage:**
+```bash
+pm2 monit
+```
+
+**Remove processes:**
+```bash
+pm2 delete all
+```
+
+**Enable auto-restart on system reboot:**
+```bash
+# Save current process list
+pm2 save
+
+# Generate startup script
+pm2 startup
+
+# Follow the instructions shown to enable startup
+```
+
+**Configuration:**
+The `ecosystem.config.cjs` file manages both processes:
+- `xdesign-server`: Runs on port 8787 (production) or 8777 (development)
+- `xdesign-worker`: Background job processor
+
+**Important Notes:**
+- Ensure Redis is running before starting PM2
+- Both server and worker will auto-restart if they crash
+- Use `pm2 logs` to debug issues
+- For production, always run `pm2 save` after starting
+
+---
+
 ### Vercel Deployment (Recommended)
 
 **Prerequisites:**
