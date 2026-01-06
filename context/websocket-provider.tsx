@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * @deprecated This file is deprecated. Use WebSocketProvider from @/context/websocket-provider instead.
- *
- * WebSocket has been moved to a global provider to prevent duplicate connections
- * during page navigation. Import from @/context/websocket-provider:
- *
- * import { useWebSocket } from "@/context/websocket-provider";
- */
-
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface WebSocketMessage {
@@ -17,11 +8,17 @@ interface WebSocketMessage {
   data: any;
 }
 
+interface WebSocketContextType {
+  freshData: WebSocketMessage[];
+  isConnected: boolean;
+}
+
+const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+
 /**
- * WebSocket hook for real-time updates
- * Replaces useInngestSubscription
+ * Global WebSocket Provider - ensures only ONE connection per app
  */
-export const useWebSocket = () => {
+export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -133,8 +130,20 @@ export const useWebSocket = () => {
     };
   }, []);
 
-  return {
-    freshData: messages,
-    isConnected,
-  };
+  return (
+    <WebSocketContext.Provider value={{ freshData: messages, isConnected }}>
+      {children}
+    </WebSocketContext.Provider>
+  );
+};
+
+/**
+ * Hook to access WebSocket data from any component
+ */
+export const useWebSocket = () => {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    throw new Error('useWebSocket must be used within WebSocketProvider');
+  }
+  return context;
 };

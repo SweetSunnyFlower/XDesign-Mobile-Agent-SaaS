@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocket } from "@/context/websocket-provider";
 import { THEME_LIST, ThemeType } from "@/lib/themes";
 import { FrameType } from "@/types/project";
 import {
@@ -8,6 +8,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -62,6 +63,8 @@ export const CanvasProvider = ({
     null
   );
 
+  const processedCountRef = useRef(0);
+
   const [prevProjectId, setPrevProjectId] = useState(projectId);
   if (projectId !== prevProjectId) {
     setPrevProjectId(projectId);
@@ -69,6 +72,7 @@ export const CanvasProvider = ({
     setFrames(initialFrames);
     setThemeId(initialThemeId || THEME_LIST[0].id);
     setSelectedFrameId(null);
+    processedCountRef.current = 0; // Reset message counter when switching projects
   }
 
   const theme = THEME_LIST.find((t) => t.id === themeId);
@@ -83,7 +87,11 @@ export const CanvasProvider = ({
   useEffect(() => {
     if (!freshData || freshData.length === 0) return;
 
-    freshData.forEach((message) => {
+    // Only process new messages, not all history
+    const newMessages = freshData.slice(processedCountRef.current);
+    processedCountRef.current = freshData.length;
+
+    newMessages.forEach((message) => {
       const { data, topic } = message;
       console.log("WebSocket topic", topic);
       console.log("WebSocket data", data);
@@ -96,32 +104,25 @@ export const CanvasProvider = ({
           break;
         case "analysis.start":
           setLoadingStatus("analyzing");
+          break;
         case "analysis.complete":
           setLoadingStatus("generating");
           if (data.theme) setThemeId(data.theme);
-
-          if (data.screens && data.screens.length > 0) {
-            const skeletonFrames: FrameType[] = data.screens.map((s: any) => ({
-              id: s.id,
-              title: s.name,
-              htmlContent: "",
-              isLoading: true,
-            }));
-            setFrames((prev) => [...prev, ...skeletonFrames]);
+          break;
+        case "frames.created":
+          // Add empty frames with database IDs
+          if (data.frames && data.frames.length > 0) {
+            setFrames((prev) => [...prev, ...data.frames]);
           }
           break;
-        case "frame.created":
+        case "frame.updated":
+          // Update frame by database ID
           if (data.frame) {
             setFrames((prev) => {
               const newFrames = [...prev];
-              console.log("newFrames", newFrames);
-              console.log("data", data);
-              const idx = newFrames.findIndex((f) => f.id === data.screenId);
-              console.log("idx", idx);
+              const idx = newFrames.findIndex((f) => f.id === data.frameId);
               if (idx !== -1) {
                 newFrames[idx] = data.frame;
-              } else {
-                newFrames.push(data.frame);
               }
               return newFrames;
             });

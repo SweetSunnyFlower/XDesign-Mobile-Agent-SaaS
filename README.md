@@ -56,3 +56,5 @@ I build real-world SaaS, AI agents, and production-grade systems.
 
 🔔 Subscribe here:
 👉 [https://dub.sh/subcribe-to-channel](https://dub.sh/subcribe-to-channel)
+
+npx puppeteer browsers install chrome          

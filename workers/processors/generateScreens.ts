@@ -143,9 +143,32 @@ export const generateScreensProcessor = async (
 
     const analysis = { ...output, themeToUse };
 
-    // STEP 2: Generate each screen
+    // STEP 2: Create frames first to get database IDs
     console.log(
-      `[generateScreens] Step 2: Generating ${analysis.screens.length} screens`
+      `[generateScreens] Step 2: Creating ${analysis.screens.length} frames in database`
+    );
+
+    const createdFrames: FrameType[] = [];
+    for (const screenPlan of analysis.screens) {
+      const frame = await prisma.frame.create({
+        data: {
+          projectId,
+          title: screenPlan.name,
+          htmlContent: "", // Empty initially, will be filled by AI
+        },
+      });
+      createdFrames.push(frame);
+    }
+
+    // Emit frames with database IDs
+    await emitToUser(userId, "frames.created", {
+      frames: createdFrames,
+      projectId: projectId,
+    });
+
+    // STEP 3: Generate HTML for each screen
+    console.log(
+      `[generateScreens] Step 3: Generating HTML for ${analysis.screens.length} screens`
     );
 
     const generatedFrames: FrameType[] = isExistingGeneration
@@ -154,6 +177,7 @@ export const generateScreensProcessor = async (
 
     for (let i = 0; i < analysis.screens.length; i++) {
       const screenPlan = analysis.screens[i];
+      const frameToUpdate = createdFrames[i]; // Get corresponding frame
       const selectedTheme = THEME_LIST.find(
         (t) => t.id === analysis.themeToUse
       );
@@ -232,22 +256,19 @@ export const generateScreensProcessor = async (
       finalHtml = match ? match[0] : finalHtml;
       finalHtml = finalHtml.replace(/```/g, "");
 
-      //Create the frame in database
-      const frame = await prisma.frame.create({
-        data: {
-          projectId,
-          title: screenPlan.name,
-          htmlContent: finalHtml,
-        },
+      // Update the frame with generated HTML
+      const updatedFrame = await prisma.frame.update({
+        where: { id: frameToUpdate.id },
+        data: { htmlContent: finalHtml },
       });
 
       // Add to generatedFrames for next iteration's context
-      generatedFrames.push(frame);
+      generatedFrames.push(updatedFrame);
 
-      // Emit frame created event
-      await emitToUser(userId, "frame.created", {
-        frame: frame,
-        screenId: screenPlan.id,
+      // Emit frame updated event
+      await emitToUser(userId, "frame.updated", {
+        frameId: updatedFrame.id,
+        frame: updatedFrame,
         projectId: projectId,
       });
 

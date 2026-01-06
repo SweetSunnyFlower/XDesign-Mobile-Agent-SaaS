@@ -111,9 +111,9 @@ export const regenerateFrameProcessor = async (
     });
 
     // Emit frame updated event
-    await emitToUser(userId, "frame.created", {
+    await emitToUser(userId, "frame.updated", {
+      frameId: updatedFrame.id,
       frame: updatedFrame,
-      screenId: frameId,
       projectId: projectId,
     });
 
