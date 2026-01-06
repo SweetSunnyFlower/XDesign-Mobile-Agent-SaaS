@@ -11,7 +11,7 @@ export default withAuth({
     },
   },
   pages: {
-    signIn: "/register", // 当用户未登录时，自动跳转到的页面路径
+    signIn: "/login", // 当用户未登录时，自动跳转到的页面路径
   },
 });
 
