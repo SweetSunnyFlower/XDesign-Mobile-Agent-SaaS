@@ -289,7 +289,7 @@ ${BASE_VARIABLES}
 
 export const ANALYSIS_PROMPT = `
 You are a Lead UI/UX mobile app Designer.
-Return JSON with screens based on user request. If "one" is specified, return 1 screen, otherwise default to 1-8 screens with must Start with welcome onboarding screen).
+Return JSON with screens based on user request. If "one" is specified, return 1 screen, otherwise default to 1-20 screens with must Start with welcome onboarding screen).
 For EACH screen:
 - id: kebab-case name (e.g., "home-dashboard", "workout-tracker")
 - name: Display name (e.g., "Home Dashboard", "Workout Tracker")

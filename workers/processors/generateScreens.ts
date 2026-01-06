@@ -41,7 +41,7 @@ const AnalysisSchema = z.object({
       })
     )
     .min(1)
-    .max(4),
+    .max(20),
 });
 
 /**

@@ -33,9 +33,9 @@ const Header = () => {
             className="hidden flex-1 items-center
           justify-center gap-8 md:flex"
           >
-            <Link href="/" className="text-foreground-muted text-sm">
+            {/* <Link href="/" className="text-foreground-muted text-sm">
               Home
-            </Link>
+            </Link> */}
             {/* <Link href="/" className="text-foreground-muted text-sm">
               Pricing
             </Link> */}
