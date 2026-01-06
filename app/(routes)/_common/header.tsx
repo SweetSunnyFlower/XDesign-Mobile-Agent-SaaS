@@ -36,9 +36,9 @@ const Header = () => {
             <Link href="/" className="text-foreground-muted text-sm">
               Home
             </Link>
-            <Link href="/" className="text-foreground-muted text-sm">
+            {/* <Link href="/" className="text-foreground-muted text-sm">
               Pricing
-            </Link>
+            </Link> */}
           </div>
 
           <div
