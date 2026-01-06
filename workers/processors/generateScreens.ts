@@ -3,7 +3,7 @@ import { generateText, Output, stepCountIs } from "ai";
 import { deepseek } from "@/lib/deepseek";
 import { z } from "zod";
 import { FrameType } from "@/types/project";
-import { ANALYSIS_PROMPT, GENERATION_SYSTEM_PROMPT } from "@/lib/prompt";
+import { ANALYSIS_PROMPT, ANALYSIS_CN_PROMPT, GENERATION_SYSTEM_PROMPT, GENERATION_CN_SYSTEM_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "@/lib/tools";
@@ -110,7 +110,7 @@ export const generateScreensProcessor = async (
       output: Output.object({
         schema: AnalysisSchema,
       }),
-      system: ANALYSIS_PROMPT,
+      system: ANALYSIS_CN_PROMPT,
       prompt: analysisPrompt,
     });
 
@@ -203,7 +203,7 @@ export const generateScreensProcessor = async (
       // Generate screen HTML with AI
       const result = await generateText({
         model: deepseek("deepseek-v3-1-250821"),
-        system: GENERATION_SYSTEM_PROMPT,
+        system: GENERATION_CN_SYSTEM_PROMPT,
         tools: {
           searchUnsplash: unsplashTool,
         },
