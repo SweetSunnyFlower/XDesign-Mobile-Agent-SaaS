@@ -8,7 +8,7 @@
     "dev:next": "tsx server.ts",
     "worker": "tsx watch workers/index.ts",
     "build": "next build",
-    "start": "NODE_ENV=production node server.ts",
+    "start": "NODE_ENV=production tsx server.ts",
     "start:worker": "NODE_ENV=production tsx workers/index.ts",
     "lint": "eslint",
     "postinstall": "prisma generate"
