@@ -13,7 +13,10 @@ interface WebSocketContextType {
   isConnected: boolean;
 }
 
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketContextType>({
+  freshData: [],
+  isConnected: false
+});
 
 /**
  * Global WebSocket Provider - ensures only ONE connection per app
@@ -22,7 +25,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isConnectingRef = useRef(false);
 
   useEffect(() => {
@@ -84,7 +87,9 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
           // If token expired, refresh and reconnect
           if (error.message.includes('Invalid token') || error.message.includes('expired')) {
             console.log('Token expired, reconnecting...');
-            clearTimeout(reconnectTimeoutRef.current);
+            if (reconnectTimeoutRef.current) {
+              clearTimeout(reconnectTimeoutRef.current);
+            }
             reconnectTimeoutRef.current = setTimeout(() => {
               socket.disconnect();
               if (isMounted) {
@@ -108,7 +113,9 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 
         // Retry connection after delay
         if (isMounted) {
-          clearTimeout(reconnectTimeoutRef.current);
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
           reconnectTimeoutRef.current = setTimeout(connectSocket, 5000);
         }
       }
@@ -120,7 +127,9 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
     return () => {
       isMounted = false;
       isConnectingRef.current = false;
-      clearTimeout(reconnectTimeoutRef.current);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -140,7 +149,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
 /**
  * Hook to access WebSocket data from any component
  */
-export const useWebSocket = () => {
+export const useWebSocket = (): WebSocketContextType => {
   const context = useContext(WebSocketContext);
   if (!context) {
     throw new Error('useWebSocket must be used within WebSocketProvider');
