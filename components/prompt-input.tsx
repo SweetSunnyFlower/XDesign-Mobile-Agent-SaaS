@@ -2,12 +2,23 @@
 
 import { cn } from "@/lib/utils";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
 } from "./ui/input-group";
-import { CornerDownLeftIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CornerDownLeftIcon,
+  MoreHorizontal,
+} from "lucide-react";
 import { Spinner } from "./ui/spinner";
 
 interface PropsType {
@@ -17,6 +28,7 @@ interface PropsType {
   className?: string;
   hideSubmitBtn?: boolean;
   onSubmit?: () => void;
+  type?: string;
 }
 const PromptInput = ({
   promptText,
@@ -25,6 +37,7 @@ const PromptInput = ({
   className,
   hideSubmitBtn = false,
   onSubmit,
+  type = 'mobile'
 }: PropsType) => {
   return (
     <div className="bg-background">
@@ -47,6 +60,17 @@ const PromptInput = ({
           align="block-end"
           className="flex items-center justify-end"
         >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <InputGroupButton className="!pr-1.5 text-xs">
+                Type <ChevronDownIcon className="size-3" />
+              </InputGroupButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="[--radius:0.95rem]">
+              <DropdownMenuItem>Web</DropdownMenuItem>
+              <DropdownMenuItem>Mobile</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {!hideSubmitBtn && (
             <InputGroupButton
               variant="default"
