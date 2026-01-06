@@ -2,6 +2,7 @@
 import { useWebSocket } from "@/context/websocket-provider";
 import { THEME_LIST, ThemeType } from "@/lib/themes";
 import { FrameType } from "@/types/project";
+import { useUpdateProjectTheme } from "@/features/use-project";
 import {
   createContext,
   ReactNode,
@@ -64,6 +65,23 @@ export const CanvasProvider = ({
   );
 
   const processedCountRef = useRef(0);
+
+  // Mutation for updating project theme in database
+  const updateThemeMutation = useUpdateProjectTheme(projectId || "");
+
+  // Handle theme change - update both local state and database
+  const handleSetTheme = useCallback(
+    (newThemeId: string) => {
+      // Optimistically update local state
+      setThemeId(newThemeId);
+
+      // Update database if projectId exists
+      if (projectId) {
+        updateThemeMutation.mutate(newThemeId);
+      }
+    },
+    [projectId, updateThemeMutation]
+  );
 
   const [prevProjectId, setPrevProjectId] = useState(projectId);
   if (projectId !== prevProjectId) {
@@ -156,7 +174,7 @@ export const CanvasProvider = ({
     <CanvasContext.Provider
       value={{
         theme,
-        setTheme: setThemeId,
+        setTheme: handleSetTheme,
         themes: THEME_LIST,
         frames,
         setFrames,

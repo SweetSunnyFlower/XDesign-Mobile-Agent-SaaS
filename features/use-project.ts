@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -30,5 +30,25 @@ export const useGetProjects = (userId?: string) => {
       return res.data.data;
     },
     enabled: !!userId,
+  });
+};
+
+export const useUpdateProjectTheme = (projectId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (themeId: string) =>
+      await axios
+        .patch(`/api/project/${projectId}`, {
+          themeId,
+        })
+        .then((res) => res.data),
+    onSuccess: () => {
+      // Invalidate project query to refetch with new theme
+      queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+    },
+    onError: (error) => {
+      console.log("Failed to update theme", error);
+      toast.error("Failed to update theme");
+    },
   });
 };

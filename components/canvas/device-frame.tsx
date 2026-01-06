@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import axios from "axios";
 import { TOOL_MODE_ENUM, ToolModeType } from "@/constant/canvas";
@@ -52,7 +52,12 @@ const DeviceFrame = ({
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const isSelected = selectedFrameId === frameId;
-  const fullHtml = getHTMLWrapper(html, title, theme_style, frameId);
+
+  // Recalculate fullHtml when html, title, theme_style, or frameId changes
+  const fullHtml = useMemo(
+    () => getHTMLWrapper(html, title, theme_style, frameId),
+    [html, title, theme_style, frameId]
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
