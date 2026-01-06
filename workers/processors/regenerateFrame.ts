@@ -50,7 +50,7 @@ export const regenerateFrameProcessor = async (
 
     const result = await generateText({
       model: deepseek("deepseek-v3-1-250821"),
-      system: GENERATION_CN_SYSTEM_PROMPT,
+      system: GENERATION_SYSTEM_PROMPT,
       tools: {
         searchUnsplash: unsplashTool,
       },

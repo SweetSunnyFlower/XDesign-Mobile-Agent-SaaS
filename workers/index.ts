@@ -2,10 +2,11 @@ import "dotenv/config";
 import { Worker, Job } from 'bullmq';
 import redis from '../lib/redis';
 import { generateScreensProcessor } from './processors/generateScreens';
+import { generateFrameProcessor } from './processors/generateFrame';
 import { regenerateFrameProcessor } from './processors/regenerateFrame';
-import { GenerateScreensJobData, RegenerateFrameJobData } from '../lib/queue';
+import { GenerateScreensJobData, GenerateFrameJobData, RegenerateFrameJobData } from '../lib/queue';
 
-type JobData = GenerateScreensJobData | RegenerateFrameJobData;
+type JobData = GenerateScreensJobData | GenerateFrameJobData | RegenerateFrameJobData;
 
 console.log(`
 ╭─────────────────────────────────────────────────╮
@@ -13,7 +14,7 @@ console.log(`
 │                                                 │
 │  ➜ Queue:     xdesign-generation                │
 │  ➜ Redis:     ${process.env.REDIS_URL || 'redis://localhost:6379'}    │
-│  ➜ Concurrency: 2                               │
+│  ➜ Concurrency: 5                               │
 ╰─────────────────────────────────────────────────╯
 `);
 
@@ -30,6 +31,9 @@ const worker = new Worker<JobData>(
       case 'generate-screens':
         return await generateScreensProcessor(job as Job<GenerateScreensJobData>);
 
+      case 'generate-frame':
+        return await generateFrameProcessor(job as Job<GenerateFrameJobData>);
+
       case 'regenerate-frame':
         return await regenerateFrameProcessor(job as Job<RegenerateFrameJobData>);
 
@@ -39,9 +43,9 @@ const worker = new Worker<JobData>(
   },
   {
     connection: redis,
-    concurrency: 2, // Process up to 2 jobs concurrently
+    concurrency: 5, // Process up to 5 jobs concurrently (for parallel frame generation)
     limiter: {
-      max: 10, // Max 10 jobs
+      max: 20, // Max 20 jobs
       duration: 60000, // per 60 seconds
     },
   }

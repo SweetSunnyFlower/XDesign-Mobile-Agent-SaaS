@@ -11,6 +11,22 @@ export type GenerateScreensJobData = {
   theme?: string;
 };
 
+export type GenerateFrameJobData = {
+  userId: string;
+  projectId: string;
+  frameId: string;
+  screenPlan: {
+    id: string;
+    name: string;
+    purpose: string;
+    visualDescription: string;
+  };
+  theme: string;
+  previousFrames: FrameType[];
+  screenIndex: number;
+  totalScreens: number;
+};
+
 export type RegenerateFrameJobData = {
   userId: string;
   projectId: string;
@@ -21,7 +37,7 @@ export type RegenerateFrameJobData = {
 };
 
 // Job name types
-export type JobName = 'generate-screens' | 'regenerate-frame';
+export type JobName = 'generate-screens' | 'generate-frame' | 'regenerate-frame';
 
 // Create a single queue for all generation jobs
 export const queue = new Queue('xdesign-generation', {
@@ -45,6 +61,18 @@ export const queue = new Queue('xdesign-generation', {
 // Type-safe job add functions
 export const addGenerateScreensJob = async (data: GenerateScreensJobData) => {
   return await queue.add('generate-screens', data);
+};
+
+export const addGenerateFrameJob = async (data: GenerateFrameJobData) => {
+  return await queue.add('generate-frame', data, {
+    // Frame generation jobs can run in parallel
+    // Remove delay to allow concurrent execution
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 2000,
+    },
+  });
 };
 
 export const addRegenerateFrameJob = async (data: RegenerateFrameJobData) => {

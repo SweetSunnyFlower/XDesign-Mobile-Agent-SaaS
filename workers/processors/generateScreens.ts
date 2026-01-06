@@ -1,14 +1,13 @@
 import { Job } from "bullmq";
-import { generateText, Output, stepCountIs } from "ai";
+import { generateText, Output } from "ai";
 import { deepseek } from "@/lib/deepseek";
 import { z } from "zod";
 import { FrameType } from "@/types/project";
-import { ANALYSIS_PROMPT, ANALYSIS_CN_PROMPT, GENERATION_SYSTEM_PROMPT, GENERATION_CN_SYSTEM_PROMPT } from "@/lib/prompt";
+import { ANALYSIS_PROMPT } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
-import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
-import { unsplashTool } from "@/lib/tools";
+import { THEME_LIST } from "@/lib/themes";
 import { emitToUser } from "../utils/emitProgress";
-import { GenerateScreensJobData } from "@/lib/queue";
+import { GenerateScreensJobData, addGenerateFrameJob } from "@/lib/queue";
 
 const AnalysisSchema = z.object({
   theme: z
@@ -110,7 +109,7 @@ export const generateScreensProcessor = async (
       output: Output.object({
         schema: AnalysisSchema,
       }),
-      system: ANALYSIS_CN_PROMPT,
+      system: ANALYSIS_PROMPT,
       prompt: analysisPrompt,
     });
 
@@ -143,21 +142,68 @@ export const generateScreensProcessor = async (
 
     const analysis = { ...output, themeToUse };
 
-    // STEP 2: Create frames first to get database IDs
+    // STEP 2: Create frames first to get database IDs (with idempotency check)
     console.log(
       `[generateScreens] Step 2: Creating ${analysis.screens.length} frames in database`
     );
 
-    const createdFrames: FrameType[] = [];
-    for (const screenPlan of analysis.screens) {
-      const frame = await prisma.frame.create({
-        data: {
-          projectId,
-          title: screenPlan.name,
-          htmlContent: "", // Empty initially, will be filled by AI
-        },
-      });
-      createdFrames.push(frame);
+    let createdFrames: FrameType[] = [];
+
+    // Check if frames already exist (for retry scenarios)
+    const existingEmptyFrames = await prisma.frame.findMany({
+      where: {
+        projectId,
+        htmlContent: "", // Only get empty frames (not yet generated)
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    // If we have the exact number of empty frames, it's a retry - reuse them
+    if (existingEmptyFrames.length === analysis.screens.length) {
+      console.log(
+        `[generateScreens] Found ${existingEmptyFrames.length} existing empty frames, reusing them (retry scenario)`
+      );
+      createdFrames = existingEmptyFrames;
+
+      // Update titles to match new screen plans
+      for (let i = 0; i < createdFrames.length; i++) {
+        await prisma.frame.update({
+          where: { id: createdFrames[i].id },
+          data: { title: analysis.screens[i].name },
+        });
+        createdFrames[i].title = analysis.screens[i].name;
+      }
+    } else {
+      // Clean up any orphaned empty frames from failed attempts
+      if (existingEmptyFrames.length > 0) {
+        console.log(
+          `[generateScreens] Cleaning up ${existingEmptyFrames.length} orphaned empty frames`
+        );
+        await prisma.frame.deleteMany({
+          where: {
+            id: {
+              in: existingEmptyFrames.map((f) => f.id),
+            },
+          },
+        });
+      }
+
+      // Create new frames
+      console.log(
+        `[generateScreens] Creating ${analysis.screens.length} new frames`
+      );
+      for (const screenPlan of analysis.screens) {
+        const frame = await prisma.frame.create({
+          data: {
+            projectId,
+            title: screenPlan.name,
+            htmlContent: "", // Empty initially, will be filled by AI
+          },
+        });
+        createdFrames.push(frame);
+      }
     }
 
     // Emit frames with database IDs
@@ -166,126 +212,69 @@ export const generateScreensProcessor = async (
       projectId: projectId,
     });
 
-    // STEP 3: Generate HTML for each screen
+    // STEP 3: Dispatch concurrent frame generation jobs
     console.log(
-      `[generateScreens] Step 3: Generating HTML for ${analysis.screens.length} screens`
+      `[generateScreens] Step 3: Dispatching ${analysis.screens.length} concurrent frame generation jobs`
     );
 
-    const generatedFrames: FrameType[] = isExistingGeneration
-      ? [...frames!]
+    // Get all existing frames with content (for context in later frames)
+    const existingFramesWithContent = isExistingGeneration
+      ? frames!.filter((f) => f.htmlContent && f.htmlContent.trim() !== "")
       : [];
 
+    // Dispatch jobs for each frame in parallel
+    const frameJobs = [];
     for (let i = 0; i < analysis.screens.length; i++) {
       const screenPlan = analysis.screens[i];
-      const frameToUpdate = createdFrames[i]; // Get corresponding frame
-      const selectedTheme = THEME_LIST.find(
-        (t) => t.id === analysis.themeToUse
-      );
+      const frameToUpdate = createdFrames[i];
+
+      // Skip if frame already has content (retry scenario)
+      if (frameToUpdate.htmlContent && frameToUpdate.htmlContent.trim() !== "") {
+        console.log(
+          `[generateScreens] Frame ${i + 1}/${
+            analysis.screens.length
+          }: ${screenPlan.name} already has content, skipping job dispatch`
+        );
+        continue;
+      }
+
+      // For context: include existing frames + frames that will be generated before this one
+      // Note: Since jobs run in parallel, we can only provide existing frames as context
+      const previousFrames = existingFramesWithContent;
 
       console.log(
-        `[generateScreens] Generating screen ${i + 1}/${
+        `[generateScreens] Dispatching job for frame ${i + 1}/${
           analysis.screens.length
         }: ${screenPlan.name}`
       );
 
-      //Combine the Theme Styles + Base Variable
-      const fullThemeCSS = `
-        ${BASE_VARIABLES}
-        ${selectedTheme?.style || ""}
-      `;
-
-      // Get all previous existing or generated frames
-      const allPreviousFrames = generatedFrames.slice(0, i);
-      const previousFramesContext = allPreviousFrames
-        .map((f: FrameType) => `<!-- ${f.title} -->\n${f.htmlContent}`)
-        .join("\n\n");
-
-      // Generate screen HTML with AI
-      const result = await generateText({
-        model: deepseek("deepseek-v3-1-250821"),
-        system: GENERATION_CN_SYSTEM_PROMPT,
-        tools: {
-          searchUnsplash: unsplashTool,
-        },
-        stopWhen: stepCountIs(5),
-        prompt: `
-        - Screen ${i + 1}/${analysis.screens.length}
-        - Screen ID: ${screenPlan.id}
-        - Screen Name: ${screenPlan.name}
-        - Screen Purpose: ${screenPlan.purpose}
-
-        VISUAL DESCRIPTION: ${screenPlan.visualDescription}
-
-        EXISTING SCREENS REFERENCE (Extract and reuse their components):
-        ${previousFramesContext || "No previous screens"}
-
-        THEME VARIABLES (Reference ONLY - already defined in parent, do NOT redeclare these):
-        ${fullThemeCSS}
-
-      CRITICAL REQUIREMENTS A MUST - READ CAREFULLY:
-      - **If previous screens exist, COPY the EXACT bottom navigation component structure and styling - do NOT recreate it
-      - **Extract common components (cards, buttons, headers) and reuse their styling
-      - **Maintain the exact same visual hierarchy, spacing, and color scheme
-      - **This screen should look like it belongs in the same app as the previous screens
-
-      1. **Generate ONLY raw HTML markup for this mobile app screen using Tailwind CSS.**
-        Use Tailwind classes for layout, spacing, typography, shadows, etc.
-        Use theme CSS variables ONLY for color-related properties (bg-[var(--background)], text-[var(--foreground)], border-[var(--border)], ring-[var(--ring)], etc.)
-      2. **All content must be inside a single root <div> that controls the layout.**
-        - No overflow classes on the root.
-        - All scrollable content must be in inner containers with hidden scrollbars: [&::-webkit-scrollbar]:hidden scrollbar-none
-      3. **For absolute overlays (maps, bottom sheets, modals, etc.):**
-        - Use \`relative w-full h-screen\` on the top div of the overlay.
-      4. **For regular content:**
-        - Use \`w-full h-full min-h-screen\` on the top div.
-      5. **Do not use h-screen on inner content unless absolutely required.**
-        - Height must grow with content; content must be fully visible inside an iframe.
-      6. **For z-index layering:**
-        - Ensure absolute elements do not block other content unnecessarily.
-      7. **Output raw HTML only, starting with <div>.**
-        - Do not include markdown, comments, <html>, <body>, or <head>.
-      8. **Hardcode a style only if a theme variable is not needed for that element.**
-      9. **Ensure iframe-friendly rendering:**
-        - All elements must contribute to the final scrollHeight so your parent iframe can correctly resize.
-      Generate the complete, production-ready HTML for this screen now
-    `.trim(),
+      const jobPromise = addGenerateFrameJob({
+        userId,
+        projectId,
+        frameId: frameToUpdate.id,
+        screenPlan,
+        theme: analysis.themeToUse,
+        previousFrames,
+        screenIndex: i,
+        totalScreens: analysis.screens.length,
       });
 
-      let finalHtml = result.text ?? "";
-      const match = finalHtml.match(/<div[\s\S]*<\/div>/);
-      finalHtml = match ? match[0] : finalHtml;
-      finalHtml = finalHtml.replace(/```/g, "");
-
-      // Update the frame with generated HTML
-      const updatedFrame = await prisma.frame.update({
-        where: { id: frameToUpdate.id },
-        data: { htmlContent: finalHtml },
-      });
-
-      // Add to generatedFrames for next iteration's context
-      generatedFrames.push(updatedFrame);
-
-      // Emit frame updated event
-      await emitToUser(userId, "frame.updated", {
-        frameId: updatedFrame.id,
-        frame: updatedFrame,
-        projectId: projectId,
-      });
-
-      // Update progress
-      const progress = 30 + ((i + 1) / analysis.screens.length) * 60;
-      await job.updateProgress(Math.round(progress));
+      frameJobs.push(jobPromise);
     }
 
-    // Emit generation complete
-    await emitToUser(userId, "generation.complete", {
-      status: "completed",
-      projectId: projectId,
-    });
+    // Wait for all jobs to be added to queue
+    await Promise.all(frameJobs);
+
+    console.log(
+      `[generateScreens] Dispatched ${frameJobs.length} frame generation jobs`
+    );
 
     await job.updateProgress(100);
 
     console.log(`[generateScreens] Job ${job.id} completed successfully`);
+    console.log(
+      `[generateScreens] Note: ${frameJobs.length} child jobs are running in parallel`
+    );
   } catch (error) {
     console.error(`[generateScreens] Job ${job.id} failed:`, error);
 

@@ -239,7 +239,7 @@ const THEME_OPTIONS_STRING = THEME_LIST.map(
 
 export const ANALYSIS_CN_PROMPT = `
 你是一位首席移动端 UI/UX 设计师。
-请根据用户请求返回包含页面设计的 JSON 数据。如果用户指定了 "one"（一个），则返回 1 个页面；否则默认返回 1-4 个页面（必须以欢迎/引导页开始）。
+请根据用户请求返回包含页面设计的 JSON 数据
 
 对于每一个页面 (Screen)：
 - id: kebab-case 格式的名称 (例如: "home-dashboard", "workout-tracker")
@@ -289,7 +289,7 @@ ${BASE_VARIABLES}
 
 export const ANALYSIS_PROMPT = `
 You are a Lead UI/UX mobile app Designer.
-Return JSON with screens based on user request. If "one" is specified, return 1 screen, otherwise default to 1-4 screens with must Start with welcome onboarding screen).
+Return JSON with screens based on user request. If "one" is specified, return 1 screen, otherwise default to 1-8 screens with must Start with welcome onboarding screen).
 For EACH screen:
 - id: kebab-case name (e.g., "home-dashboard", "workout-tracker")
 - name: Display name (e.g., "Home Dashboard", "Workout Tracker")

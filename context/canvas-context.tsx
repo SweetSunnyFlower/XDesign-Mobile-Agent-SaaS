@@ -65,6 +65,8 @@ export const CanvasProvider = ({
   );
 
   const processedCountRef = useRef(0);
+  const expectedFramesCountRef = useRef(0); // Track expected number of frames
+  const completedFramesCountRef = useRef(0); // Track completed frames
 
   // Mutation for updating project theme in database
   const updateThemeMutation = useUpdateProjectTheme(projectId || "");
@@ -91,6 +93,8 @@ export const CanvasProvider = ({
     setThemeId(initialThemeId || THEME_LIST[0].id);
     setSelectedFrameId(null);
     processedCountRef.current = 0; // Reset message counter when switching projects
+    expectedFramesCountRef.current = 0; // Reset expected frames count
+    completedFramesCountRef.current = 0; // Reset completed frames count
   }
 
   const theme = THEME_LIST.find((t) => t.id === themeId);
@@ -119,6 +123,9 @@ export const CanvasProvider = ({
         case "generation.start":
           const status = data.status;
           setLoadingStatus(status);
+          // Reset counters when new generation starts
+          expectedFramesCountRef.current = 0;
+          completedFramesCountRef.current = 0;
           break;
         case "analysis.start":
           setLoadingStatus("analyzing");
@@ -131,6 +138,10 @@ export const CanvasProvider = ({
           // Add empty frames with database IDs
           if (data.frames && data.frames.length > 0) {
             setFrames((prev) => [...prev, ...data.frames]);
+            // Track expected number of frames to complete
+            expectedFramesCountRef.current = data.frames.length;
+            completedFramesCountRef.current = 0; // Reset completed count
+            console.log(`Expected ${data.frames.length} frames to complete`);
           }
           break;
         case "frame.updated":
@@ -144,6 +155,24 @@ export const CanvasProvider = ({
               }
               return newFrames;
             });
+
+            // Track completion
+            completedFramesCountRef.current += 1;
+            console.log(
+              `Frame completed: ${completedFramesCountRef.current}/${expectedFramesCountRef.current}`
+            );
+
+            // Check if all frames are completed
+            if (
+              expectedFramesCountRef.current > 0 &&
+              completedFramesCountRef.current >= expectedFramesCountRef.current
+            ) {
+              console.log("All frames completed!");
+              setLoadingStatus("completed");
+              setTimeout(() => {
+                setLoadingStatus("idle");
+              }, 100);
+            }
           }
           break;
         case "generation.complete":
