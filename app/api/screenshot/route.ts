@@ -58,6 +58,10 @@ export async function POST(req: Request) {
     let puppeteer: any;
     let launchOptions: any = {
       headless: true,
+      args: [
+        "--no-sandbox", // <--- 必须添加这一行
+        "--disable-setuid-sandbox", // 通常也建议加上这一行以防万一
+      ],
     };
 
     if (isProduction && isVercel) {
