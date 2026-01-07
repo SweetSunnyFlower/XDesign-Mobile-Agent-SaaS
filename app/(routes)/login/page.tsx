@@ -24,7 +24,7 @@ export default function LoginPage() {
         // 注意：通常是小写 'credentials'
         email,
         password,
-        redirect: false, // 阻止自动跳转，以便手动处理错误
+        redirect: true, // 阻止自动跳转，以便手动处理错误
       });
 
       if (result?.error) {
