@@ -21,11 +21,11 @@ export default function RegisterPage() {
       const result = await register(formData);
 
       if (result?.error) {
+        console.log(result)
         toast.error(result.error);
       } else {
         toast.success("Account created successfully");
-        router.push("/");
-        router.refresh();
+        router.push("/login");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");

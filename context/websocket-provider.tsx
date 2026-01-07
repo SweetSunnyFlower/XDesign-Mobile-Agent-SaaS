@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useSession } from 'next-auth/react';
 
 interface WebSocketMessage {
   topic: string;
@@ -22,6 +23,7 @@ const WebSocketContext = createContext<WebSocketContextType>({
  * Global WebSocket Provider - ensures only ONE connection per app
  */
 export const WebSocketProvider = ({ children }: { children: React.ReactNode }) => {
+  const { data: session, status } = useSession();
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
@@ -29,6 +31,16 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
   const isConnectingRef = useRef(false);
 
   useEffect(() => {
+    // Don't connect if user is not authenticated
+    if (status === 'loading') {
+      return; // Wait for session to load
+    }
+
+    if (status === 'unauthenticated' || !session?.user) {
+      console.log('⏭️ User not authenticated, skipping WebSocket connection');
+      return;
+    }
+
     let isMounted = true;
 
     const connectSocket = async () => {
@@ -137,7 +149,7 @@ export const WebSocketProvider = ({ children }: { children: React.ReactNode }) =
       setIsConnected(false);
       setMessages([]);
     };
-  }, []);
+  }, [session, status]);
 
   return (
     <WebSocketContext.Provider value={{ freshData: messages, isConnected }}>

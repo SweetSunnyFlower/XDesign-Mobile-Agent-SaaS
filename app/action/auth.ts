@@ -57,5 +57,5 @@ export async function register(formData: FormData) {
     return { error: "Failed to create account" };
   }
 
-  redirect("/login");
+  // redirect("/login");
 }
