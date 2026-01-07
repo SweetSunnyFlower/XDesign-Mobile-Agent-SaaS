@@ -147,7 +147,7 @@ const DeviceFrame = ({
       default={{
         x: initialPosition.x,
         y: initialPosition.y,
-        width,
+        width: frameWidth,
         height: frameSize.height,
       }}
       minWidth={width}
