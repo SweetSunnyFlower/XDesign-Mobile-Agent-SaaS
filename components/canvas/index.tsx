@@ -222,10 +222,18 @@ const Canvas = ({
                 >
                   <div>
                     {frames?.map((frame, index: number) => {
-                      // For web projects, use wider spacing (1440 + 80), for mobile use 420 + 60
-                      const frameSpacing = deviceType === 'web' ? 1520 : 480;
-                      const baseX = 100 + index * frameSpacing;
-                      const y = 100;
+                      // Matrix layout configuration
+                      const framesPerRow = deviceType === 'web' ? 2 : 50; // web: 2 per row, mobile: 4 per row
+                      const frameSpacing = deviceType === 'web' ? 1540 : 500; // horizontal spacing
+                      const rowSpacing = deviceType === 'web' ? 900 : 1000; // vertical spacing between rows
+
+                      // Calculate row and column from index
+                      const column = index % framesPerRow;
+                      const row = Math.floor(index / framesPerRow);
+
+                      // Calculate position based on row/column
+                      const baseX = 100 + column * frameSpacing;
+                      const y = 100 + row * rowSpacing;
 
                       // if (frame.isLoading) {
                       //   return (

@@ -144,18 +144,16 @@ const DeviceFrame = ({
 
   return (
     <Rnd
-      default={{
+      position={{
         x: initialPosition.x,
         y: initialPosition.y,
-        width: frameWidth,
-        height: frameSize.height,
       }}
-      minWidth={width}
-      minHeight={minHeight}
       size={{
         width: frameSize.width,
         height: frameSize.height,
       }}
+      minWidth={width}
+      minHeight={minHeight}
       disableDragging={toolMode === TOOL_MODE_ENUM.HAND}
       enableResizing={isSelected && toolMode !== TOOL_MODE_ENUM.HAND}
       scale={scale}
@@ -177,7 +175,7 @@ const DeviceFrame = ({
         left: { cursor: "ew-resize" },
         right: { cursor: "ew-resize" },
       }}
-      onResize={(e, direction, ref) => {
+      onResize={(_e, _direction, ref) => {
         setFrameSize({
           width: parseInt(ref.style.width),
           height: parseInt(ref.style.height),

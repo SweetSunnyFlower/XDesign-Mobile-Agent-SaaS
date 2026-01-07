@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useCreateProject = () => {
   const router = useRouter();
   return useMutation({
-    mutationFn: async ({ prompt, deviceType = 'mobile' }: { prompt: string; deviceType?: 'mobile' | 'web' }) =>
+    mutationFn: async ({
+      prompt,
+      deviceType = "mobile",
+    }: {
+      prompt: string;
+      deviceType?: "mobile" | "web";
+    }) =>
       await axios
         .post("/api/project", {
           prompt,
@@ -16,9 +22,13 @@ export const useCreateProject = () => {
     onSuccess: (data) => {
       router.push(`/project/${data.data.id}`);
     },
-    onError: (error) => {
+    onError: (error: AxiosError) => {
       console.log("Project failed", error);
-      toast.error("Failed to create project");
+      if (error.response?.status === 401) {
+        router.push(`/login`);
+      } else {
+        toast.error("Failed to create project");
+      }
     },
   });
 };
