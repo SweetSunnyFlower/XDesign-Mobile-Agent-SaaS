@@ -3,7 +3,7 @@ import { generateText, Output } from "ai";
 import { deepseek } from "@/lib/deepseek";
 import { z } from "zod";
 import { FrameType } from "@/types/project";
-import { ANALYSIS_PROMPT } from "@/lib/prompt";
+import { getAnalysisPrompt } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { THEME_LIST } from "@/lib/themes";
 import { emitToUser } from "../utils/emitProgress";
@@ -51,7 +51,7 @@ const AnalysisSchema = z.object({
 export const generateScreensProcessor = async (
   job: Job<GenerateScreensJobData>
 ): Promise<void> => {
-  const { userId, projectId, prompt, frames, theme: existingTheme } = job.data;
+  const { userId, projectId, prompt, frames, theme: existingTheme, deviceType = 'mobile' } = job.data;
 
   const isExistingGeneration = Array.isArray(frames) && frames.length > 0;
 
@@ -109,7 +109,7 @@ export const generateScreensProcessor = async (
       output: Output.object({
         schema: AnalysisSchema,
       }),
-      system: ANALYSIS_PROMPT,
+      system: getAnalysisPrompt(deviceType),
       prompt: analysisPrompt,
     });
 
@@ -257,6 +257,7 @@ export const generateScreensProcessor = async (
         previousFrames,
         screenIndex: i,
         totalScreens: analysis.screens.length,
+        deviceType,
       });
 
       frameJobs.push(jobPromise);

@@ -39,7 +39,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { prompt } = await request.json();
+    const body = await request.json();
+    const { prompt, deviceType = 'mobile' } = body;
+
+    console.log('📝 Creating project with:', { prompt, deviceType, fullBody: body });
+
     const session = await getServerSession(authOptions);
     const user = session?.user;
 
@@ -59,8 +63,11 @@ export async function POST(request: Request) {
       data: {
         userId,
         name: projectName,
+        deviceType,
       },
     });
+
+    console.log('✅ Project created:', { id: project.id, deviceType: project.deviceType });
 
     //Trigger the BullMQ job
     try {
@@ -68,6 +75,7 @@ export async function POST(request: Request) {
         userId,
         projectId: project.id,
         prompt,
+        deviceType,
       });
     } catch (error) {
       console.log(error);

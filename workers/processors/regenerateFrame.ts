@@ -1,7 +1,7 @@
 import { Job } from "bullmq";
 import { generateText, stepCountIs } from "ai";
 import { deepseek } from "@/lib/deepseek";
-import { GENERATION_SYSTEM_PROMPT, GENERATION_CN_SYSTEM_PROMPT } from "@/lib/prompt";
+import { getGenerationPrompt } from "@/lib/prompt";
 import prisma from "@/lib/prisma";
 import { BASE_VARIABLES, THEME_LIST } from "@/lib/themes";
 import { unsplashTool } from "@/lib/tools";
@@ -22,6 +22,7 @@ export const regenerateFrameProcessor = async (
     prompt,
     theme: themeId,
     frame,
+    deviceType = 'mobile',
   } = job.data;
 
   try {
@@ -50,7 +51,7 @@ export const regenerateFrameProcessor = async (
 
     const result = await generateText({
       model: deepseek("deepseek-v3-1-250821"),
-      system: GENERATION_SYSTEM_PROMPT,
+      system: getGenerationPrompt(deviceType),
       tools: {
         searchUnsplash: unsplashTool,
       },

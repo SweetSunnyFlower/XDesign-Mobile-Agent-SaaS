@@ -1,12 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import {
   InputGroup,
@@ -28,7 +22,8 @@ interface PropsType {
   className?: string;
   hideSubmitBtn?: boolean;
   onSubmit?: () => void;
-  type?: string;
+  deviceType?: 'mobile' | 'web';
+  onDeviceTypeChange?: (type: 'mobile' | 'web') => void;
 }
 const PromptInput = ({
   promptText,
@@ -37,10 +32,41 @@ const PromptInput = ({
   className,
   hideSubmitBtn = false,
   onSubmit,
-  type = 'mobile'
+  deviceType = 'mobile',
+  onDeviceTypeChange
 }: PropsType) => {
   return (
     <div className="bg-background">
+      {/* Device Type Selector */}
+      {onDeviceTypeChange && (
+        <div className="flex gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => onDeviceTypeChange('mobile')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              deviceType === 'mobile'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            )}
+          >
+            Mobile
+          </button>
+          <button
+            type="button"
+            onClick={() => onDeviceTypeChange('web')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              deviceType === 'web'
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            )}
+          >
+            Web
+          </button>
+        </div>
+      )}
+
       <InputGroup
         className={cn(
           "min-h-[172px] rounded-3xl bg-background ",
@@ -60,17 +86,6 @@ const PromptInput = ({
           align="block-end"
           className="flex items-center justify-end"
         >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <InputGroupButton className="!pr-1.5 text-xs">
-                Type <ChevronDownIcon className="size-3" />
-              </InputGroupButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="[--radius:0.95rem]">
-              <DropdownMenuItem>Web</DropdownMenuItem>
-              <DropdownMenuItem>Mobile</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           {!hideSubmitBtn && (
             <InputGroupButton
               variant="default"

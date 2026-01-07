@@ -10,17 +10,34 @@ import { Spinner } from "@/components/ui/spinner";
 import { ProjectType } from "@/types/project";
 import { useRouter } from "next/navigation";
 import { FolderOpenDotIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const LandingSection = () => {
   const { data: session } = useSession();
   const user = session?.user;
   const [promptText, setPromptText] = useState<string>("");
+  const [deviceType, setDeviceType] = useState<"mobile" | "web">("mobile");
   const userId = user?.id;
 
   const { data: projects, isLoading, isError } = useGetProjects(userId);
   const { mutate, isPending } = useCreateProject();
 
   const suggestions = [
+    {
+      label: "家具网站",
+      icon: "💸",
+      value: `设计一个北欧家居风格的家具网站.`,
+    },
+    {
+      label: "库存管理系统",
+      icon: "💸",
+      value: `设计一个物品库存管理系统，符合苹果公司设计规范`,
+    },
+    {
+      label: "金融理财App",
+      icon: "💸",
+      value: `设计一个金融理财App的新手引导与资产概览页`,
+    },
     {
       label: "Finance Tracker",
       icon: "💸",
@@ -59,15 +76,16 @@ const LandingSection = () => {
 
   const handleSubmit = () => {
     if (!promptText) return;
-    mutate(promptText);
+    mutate({ prompt: promptText, deviceType });
   };
 
+  console.log(projects);
   return (
     <div className=" w-full min-h-screen">
       <div className="flex flex-col">
         <Header />
 
-        <div className="relative overflow-hidden pt-28">
+        <div className={`relative overflow-hidden pt-28`}>
           <div
             className="max-w-6xl mx-auto flex flex-col
          items-center justify-center gap-8
@@ -79,7 +97,7 @@ const LandingSection = () => {
             tracking-tight sm:text-5xl
             "
               >
-                Design mobile apps <br className="md:hidden" />
+                Design mobile/web apps <br className="md:hidden" />
                 <span className="text-primary">in minutes</span>
               </h1>
               <div className="mx-auto max-w-2xl ">
@@ -101,11 +119,13 @@ const LandingSection = () => {
                   promptText={promptText}
                   setPromptText={setPromptText}
                   isLoading={isPending}
+                  deviceType={deviceType}
+                  onDeviceTypeChange={setDeviceType}
                   onSubmit={handleSubmit}
                 />
               </div>
 
-              <div className="flex flex-wrap justify-center gap-2 px-5">
+              <div className="flex flex-wrap justify-center gap-2 px-4">
                 <Suggestions>
                   {suggestions.map((s) => (
                     <Suggestion
@@ -232,11 +252,12 @@ const ProjectCard = memo(({ project }: { project: ProjectType }) => {
 
       <div className="p-4 flex flex-col">
         <h3
-          className="font-semibold
+          className="font-semibold flex flex-row justify-between items-center
          text-sm truncate w-full mb-1 line-clamp-1"
         >
-          {project.name}
+          <span>{project.name}</span> <Badge>{project.deviceType}</Badge>
         </h3>
+
         <p className="text-xs text-muted-foreground">{timeAgo}</p>
       </div>
     </div>

@@ -6,10 +6,11 @@ import { toast } from "sonner";
 export const useCreateProject = () => {
   const router = useRouter();
   return useMutation({
-    mutationFn: async (prompt: string) =>
+    mutationFn: async ({ prompt, deviceType = 'mobile' }: { prompt: string; deviceType?: 'mobile' | 'web' }) =>
       await axios
         .post("/api/project", {
           prompt,
+          deviceType,
         })
         .then((res) => res.data),
     onSuccess: (data) => {

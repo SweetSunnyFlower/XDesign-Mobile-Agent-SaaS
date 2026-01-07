@@ -4,15 +4,21 @@ export function getHTMLWrapper(
   html: string,
   title = "Untitled",
   theme_style?: string,
-  frameId?: string
+  frameId?: string,
+  deviceType: 'mobile' | 'web' = 'mobile'
 ) {
   const finalTheme = theme_style || OCEAN_BREEZE_THEME;
+
+  // For web, use a wider viewport; for mobile, keep it at device-width
+  const viewportContent = deviceType === 'web'
+    ? "width=1440,initial-scale=1"
+    : "width=device-width,initial-scale=1";
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="${viewportContent}"/>
   <title>${title}</title>
 
   <!-- Google Font -->

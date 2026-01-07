@@ -40,6 +40,7 @@ const Page = () => {
               projectId={project?.id}
               projectName={project?.name}
               isPending={isPending}
+              deviceType={(project?.deviceType as 'mobile' | 'web') || 'mobile'}
             />
           </div>
         </div>

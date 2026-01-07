@@ -9,6 +9,7 @@ export type GenerateScreensJobData = {
   prompt: string;
   frames?: FrameType[];
   theme?: string;
+  deviceType?: 'mobile' | 'web';
 };
 
 export type GenerateFrameJobData = {
@@ -25,6 +26,7 @@ export type GenerateFrameJobData = {
   previousFrames: FrameType[];
   screenIndex: number;
   totalScreens: number;
+  deviceType?: 'mobile' | 'web';
 };
 
 export type RegenerateFrameJobData = {
@@ -34,6 +36,7 @@ export type RegenerateFrameJobData = {
   prompt: string;
   theme: string;
   frame: FrameType;
+  deviceType?: 'mobile' | 'web';
 };
 
 // Job name types

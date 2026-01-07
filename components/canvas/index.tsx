@@ -20,10 +20,12 @@ const Canvas = ({
   projectId,
   isPending,
   projectName,
+  deviceType = 'mobile',
 }: {
   projectId: string;
   isPending: boolean;
   projectName: string | null;
+  deviceType?: 'mobile' | 'web';
 }) => {
   const {
     theme,
@@ -34,8 +36,12 @@ const Canvas = ({
     setLoadingStatus,
   } = useCanvas();
   const [toolMode, setToolMode] = useState<ToolModeType>(TOOL_MODE_ENUM.SELECT);
-  const [zoomPercent, setZoomPercent] = useState<number>(53);
-  const [currentScale, setCurrentScale] = useState<number>(0.53);
+
+  // Set initial zoom based on device type
+  // Mobile: 53% (420px), Web: 25% (1440px fits better)
+  const initialZoom = deviceType === 'web' ? 25 : 53;
+  const [zoomPercent, setZoomPercent] = useState<number>(initialZoom);
+  const [currentScale, setCurrentScale] = useState<number>(initialZoom / 100);
   const [openHtmlDialog, setOpenHtmlDialog] = useState(false);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -216,7 +222,9 @@ const Canvas = ({
                 >
                   <div>
                     {frames?.map((frame, index: number) => {
-                      const baseX = 100 + index * 480;
+                      // For web projects, use wider spacing (1440 + 80), for mobile use 420 + 60
+                      const frameSpacing = deviceType === 'web' ? 1520 : 480;
+                      const baseX = 100 + index * frameSpacing;
                       const y = 100;
 
                       // if (frame.isLoading) {
@@ -244,6 +252,7 @@ const Canvas = ({
                           }}
                           toolMode={toolMode}
                           theme_style={theme?.style}
+                          deviceType={deviceType}
                           onOpenHtmlDialog={onOpenHtmlDialog}
                         />
                       );
@@ -281,6 +290,7 @@ const Canvas = ({
         html={selectedFrame?.htmlContent || ""}
         title={selectedFrame?.title}
         theme_style={theme?.style}
+        deviceType={deviceType}
         open={openHtmlDialog}
         onOpenChange={setOpenHtmlDialog}
       />

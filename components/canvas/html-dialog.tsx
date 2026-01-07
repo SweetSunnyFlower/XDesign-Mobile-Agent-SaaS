@@ -7,6 +7,7 @@ const HtmlDialog = ({
   open,
   title,
   theme_style,
+  deviceType = 'mobile',
   onOpenChange,
   html,
 }: {
@@ -15,8 +16,9 @@ const HtmlDialog = ({
   html: string;
   title?: string;
   theme_style?: string;
+  deviceType?: 'mobile' | 'web';
 }) => {
-  const fullHtml = getHTMLWrapper(html, title, theme_style);
+  const fullHtml = getHTMLWrapper(html, title, theme_style, undefined, deviceType);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent

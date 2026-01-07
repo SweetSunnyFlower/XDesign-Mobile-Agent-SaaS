@@ -54,6 +54,7 @@ export async function POST(
       prompt: prompt,
       theme: project.theme || '',
       frame: frame,
+      deviceType: (project.deviceType as 'mobile' | 'web') || 'mobile',
     });
 
     return NextResponse.json({

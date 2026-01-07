@@ -24,12 +24,13 @@ type PropsType = {
   theme_style?: string;
   isLoading?: boolean;
   projectId: string;
+  deviceType?: 'mobile' | 'web';
   onOpenHtmlDialog: () => void;
 };
 const DeviceFrame = ({
   html,
   title = "Untitled",
-  width = 420,
+  width,
   minHeight = 800,
   initialPosition = { x: 0, y: 0 },
   frameId,
@@ -38,11 +39,16 @@ const DeviceFrame = ({
   theme_style,
   isLoading = false,
   projectId,
+  deviceType = 'mobile',
   onOpenHtmlDialog,
 }: PropsType) => {
   const { selectedFrameId, setSelectedFrameId, updateFrame } = useCanvas();
+
+  // Calculate width based on device type
+  const frameWidth = width ?? (deviceType === 'web' ? 1440 : 420);
+
   const [frameSize, setFrameSize] = useState({
-    width,
+    width: frameWidth,
     height: minHeight,
   });
   const [isDownloading, setIsDownloading] = useState(false);
@@ -53,11 +59,19 @@ const DeviceFrame = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const isSelected = selectedFrameId === frameId;
 
-  // Recalculate fullHtml when html, title, theme_style, or frameId changes
+  // Recalculate fullHtml when html, title, theme_style, frameId, or deviceType changes
   const fullHtml = useMemo(
-    () => getHTMLWrapper(html, title, theme_style, frameId),
-    [html, title, theme_style, frameId]
+    () => getHTMLWrapper(html, title, theme_style, frameId, deviceType),
+    [html, title, theme_style, frameId, deviceType]
   );
+
+  // Update frame width when deviceType changes
+  useEffect(() => {
+    setFrameSize((prev) => ({
+      ...prev,
+      width: frameWidth,
+    }));
+  }, [frameWidth]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

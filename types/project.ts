@@ -3,6 +3,7 @@ export type ProjectType = {
   name: string;
   theme: string;
   thumbnail?: string;
+  deviceType: string;
   frames: FrameType[];
   createdAt: Date;
   updatedAt?: Date;
