@@ -48,3 +48,29 @@ export const useUpdateProject = (projectId: string) => {
     },
   });
 };
+
+export const useDownloadProject = (projectId: string) => {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await axios.get(`/api/project/${projectId}/download`, {
+        responseType: "blob",
+      });
+      return response.data;
+    },
+    onSuccess: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `project-${projectId}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Project downloaded successfully");
+    },
+    onError: (error) => {
+      console.log("Download failed", error);
+      toast.error("Failed to download project");
+    },
+  });
+};

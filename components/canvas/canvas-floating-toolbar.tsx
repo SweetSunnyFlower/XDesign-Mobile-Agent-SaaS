@@ -1,6 +1,13 @@
 "use client";
 
-import { CameraIcon, ChevronDown, Palette, Save, Wand2 } from "lucide-react";
+import {
+  CameraIcon,
+  ChevronDown,
+  Download,
+  Palette,
+  Save,
+  Wand2,
+} from "lucide-react";
 import { useCanvas } from "@/context/canvas-context";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
@@ -13,8 +20,10 @@ import { Button } from "../ui/button";
 import {
   useGenerateDesignById,
   useUpdateProject,
+  useDownloadProject,
 } from "@/features/use-project-id";
 import { Spinner } from "../ui/spinner";
+import { ButtonGroup } from "../ui/button-group";
 
 const CanvasFloatingToolbar = ({
   projectId,
@@ -31,6 +40,7 @@ const CanvasFloatingToolbar = ({
   const { mutate, isPending } = useGenerateDesignById(projectId);
 
   const update = useUpdateProject(projectId);
+  const download = useDownloadProject(projectId);
 
   const handleAIGenerate = () => {
     if (!promptText) return;
@@ -40,6 +50,10 @@ const CanvasFloatingToolbar = ({
   const handleUpdate = () => {
     if (!currentTheme) return;
     update.mutate(currentTheme.id);
+  };
+
+  const handleDownload = () => {
+    download.mutate();
   };
 
   return (
@@ -53,7 +67,7 @@ const CanvasFloatingToolbar = ({
      dark:bg-gray-950 rounded-full shadow-xl border
     "
       >
-        <div className="flex flex-row items-center gap-2 px-3">
+        <div className="flex flex-row items-center gap-2 px-2">
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -157,21 +171,40 @@ const CanvasFloatingToolbar = ({
                 <CameraIcon className="size-4.5" />
               )}
             </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="rounded-full cursor-pointer"
-              onClick={handleUpdate}
-            >
-              {update.isPending ? (
-                <Spinner />
-              ) : (
-                <>
-                  <Save className="size-4" />
-                  Save
-                </>
-              )}
-            </Button>
+
+            <ButtonGroup>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full cursor-pointer"
+                disabled={download.isPending}
+                onClick={handleDownload}
+              >
+                {download.isPending ? (
+                  <Spinner />
+                ) : (
+                  <>
+                    <Download className="size-4" />
+                    Download
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-full cursor-pointer"
+                onClick={handleUpdate}
+              >
+                {update.isPending ? (
+                  <Spinner />
+                ) : (
+                  <>
+                    <Save className="size-4" />
+                    Save
+                  </>
+                )}
+              </Button>
+            </ButtonGroup>
           </div>
         </div>
       </div>
