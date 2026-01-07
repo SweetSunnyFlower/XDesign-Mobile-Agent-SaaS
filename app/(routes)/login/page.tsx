@@ -21,10 +21,9 @@ export default function LoginPage() {
       const email = formData.get("email") as string;
       const password = formData.get("password") as string;
       const result = await signIn("credentials", {
-        // 注意：通常是小写 'credentials'
         email,
         password,
-        redirect: true, // 阻止自动跳转，以便手动处理错误
+        redirect: false, // 手动处理跳转
       });
 
       if (result?.error) {
